@@ -1,3 +1,4 @@
+
 # Module-11-Deployment-on-Kubernetes
 
 ## Reflection on Hello Minikube
@@ -19,3 +20,14 @@ Latihan ini memberikan pemahaman konkret mengenai konsep *multi-tenancy* dan par
 * **Penyebab Pod/Service yang Dibuat Tidak Muncul di `kube-system`:** Ketika saya menjalankan perintah `kubectl get pods, services -n kube-system`, sistem menampilkan komponen infrastruktur internal seperti `coredns`, `kube-proxy`, hingga `metrics-server` yang baru saja dinyalakan. Namun, Pod `hello-node` yang saya buat sebelumnya tidak tercantum di sana. Hal ini terjadi karena ketika kita membuat *Deployment* tanpa mendefinisikan *namespace* secara eksplisit, Kubernetes secara otomatis akan menempatkan seluruh *resource* tersebut ke dalam *namespace* bernama `default`.
 
 **Refleksi Singkat:** Melalui pemisahan ini, saya memahami bahwa *Namespace* berperan penting dalam manajemen arsitektur kluster skala besar. Isolasi antara *namespace* `default` (untuk aplikasi *user*) dan `kube-system` (untuk kebutuhan internal kluster) memastikan bahwa aktivitas mendeploy atau menghapus aplikasi kita tidak akan mengganggu stabilitas core engine dari sistem Kubernetes itu sendiri.
+
+## Reflection on Rolling Update & Kubernetes Manifest File
+
+**1. What is the difference between Rolling Update and Recreate deployment strategy?**
+*Rolling Update* adalah strategi pembaruan di mana instance aplikasi (Pods) versi lama diganti dengan versi baru secara bertahap (incremental). Strategi ini memastikan tidak ada *downtime* karena selalu ada Pod yang siap melayani *request*. Sebaliknya, strategi *Recreate* mematikan seluruh Pod versi lama secara serentak terlebih dahulu, lalu membuat Pod versi baru. Hal ini menyebabkan terjadinya *downtime* sementara selama proses pembuatan Pod baru berlangsung.
+
+**2 & 3. Try deploying the Spring Petclinic REST using Recreate deployment strategy and document your attempt.**
+Untuk menggunakan strategi *Recreate*, saya mengekspor konfigurasi deployment menjadi `deployment.yaml`, kemudian mengedit bagian `strategy` menjadi `type: Recreate`. Setelah kluster di-*reset* (`minikube delete`), saya menerapkan file manifest tersebut menggunakan perintah `kubectl apply -f deployment.yaml` dan `kubectl apply -f service.yaml`. Saat *image* diperbarui menggunakan *manifest* ini, Kubernetes mematikan semua Pods `spring-petclinic-rest` secara bersamaan dan baru merestart Pod baru, mengakibatkan layanan terhenti sesaat.
+
+**4. What do you think are the benefits of using Kubernetes manifest files?**
+Berdasarkan pengalaman saya, menggunakan file manifest YAML memberikan pendekatan deklaratif yang jauh lebih terstruktur dibandingkan mengeksekusi perintah *imperative* (`kubectl create` atau `expose`) satu per satu di terminal. Manfaat utamanya adalah *reproducibility* (mudah direplikasi seperti saat me-*reset* kluster tadi), meminimalkan kesalahan pengetikan manusia (*human error*), serta sangat mendukung praktik *Infrastructure as Code* (IaC) di mana konfigurasi dapat disimpan dan dilacak perubahannya melalui Git.
